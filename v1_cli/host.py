@@ -5,6 +5,7 @@ protocol from any model behavior. This file is the HOST. The MCP CLIENT is
 `ClientSession`, from the SDK -- it is not hand-written.
 
     python v1_cli/host.py housing Winchester
+    python v1_cli/host.py distance Winchester
     python v1_cli/host.py schools Lexington
     python v1_cli/host.py safety Woburn
     python v1_cli/host.py list-tools
@@ -23,7 +24,12 @@ from mcp.client.stdio import stdio_client
 from pydantic import AnyUrl
 
 SERVER = Path(__file__).resolve().parent.parent / "server" / "server.py"
-COMMAND_TO_TOOL = {"housing": "get_housing", "schools": "get_schools", "safety": "get_safety"}
+COMMAND_TO_TOOL = {
+    "housing": "get_housing",
+    "distance": "get_distance",
+    "schools": "get_schools",
+    "safety": "get_safety",
+}
 
 
 def log(verbose: bool, *parts) -> None:
@@ -88,7 +94,7 @@ def main() -> None:
     parser = argparse.ArgumentParser(description="V1 MCP host (no LLM).")
     parser.add_argument("--verbose", action="store_true", help="log the protocol lifecycle")
     sub = parser.add_subparsers(dest="command", required=True)
-    for cmd in ("housing", "schools", "safety", "resource"):
+    for cmd in ("housing", "distance", "schools", "safety", "resource"):
         p = sub.add_parser(cmd)
         p.add_argument("town")
     sub.add_parser("list-tools")

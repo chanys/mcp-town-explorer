@@ -12,7 +12,7 @@ If a change would require editing the server to make a host work, stop and recon
 ## Layout
 
 - `data/towns.csv` — synthetic MA town data. Every row has `data_source = "synthetic"`.
-- `server/server.py` — the MCP server (FastMCP, stdio transport). Three narrow tools + one resource.
+- `server/server.py` — the MCP server (FastMCP, stdio transport). Four narrow tools + one resource.
 - `v1_cli/host.py` — host with NO LLM. Argv selects the tool. Isolates protocol from model behavior.
 - `v2_llm/host.py` — host WITH an LLM (OpenAI). Adds schema-driven tool selection and host-side validation.
 

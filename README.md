@@ -57,6 +57,7 @@ Argv selects the tool; the model is never involved. This isolates the protocol f
 ```
 uv run python v1_cli/host.py list-tools            # print the raw advertised JSON schema
 uv run python v1_cli/host.py housing Winchester
+uv run python v1_cli/host.py distance Winchester
 uv run python v1_cli/host.py schools Lexington
 uv run python v1_cli/host.py safety Woburn
 uv run python v1_cli/host.py resource Winchester   # read the town://{town} resource
