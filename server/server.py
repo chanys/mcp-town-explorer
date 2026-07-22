@@ -52,17 +52,16 @@ def _lookup(town: str) -> dict:
 
 @mcp.tool()
 def get_housing(town: str) -> dict:
-    """Housing figures for one town.
-
-    Returns the median home price in USD and the straight-line distance to
-    Boston in miles.
-    """
+    """Median home price for one town, in USD."""
     row = _lookup(town)
-    return {
-        "town": row["town"],
-        "median_home_price": row["median_home_price"],
-        "distance_to_boston_mi": row["distance_to_boston_mi"],
-    }
+    return {"town": row["town"], "median_home_price": row["median_home_price"]}
+
+
+@mcp.tool()
+def get_distance(town: str) -> dict:
+    """Straight-line distance from one town to Boston, in miles."""
+    row = _lookup(town)
+    return {"town": row["town"], "distance_to_boston_mi": row["distance_to_boston_mi"]}
 
 
 @mcp.tool()

@@ -30,7 +30,7 @@ MAX_ITERATIONS = 5
 # ALLOWLIST: the only tool names the host will ever execute. Checked before any
 # call. The server advertises exactly these, but the allowlist is the host's own
 # guarantee -- it does not trust the model to stay within bounds.
-ALLOWLIST = {"get_housing", "get_schools", "get_safety"}
+ALLOWLIST = {"get_housing", "get_distance", "get_schools", "get_safety"}
 
 SYSTEM_PROMPT = (
     "You answer questions about Massachusetts towns using the provided tools. "

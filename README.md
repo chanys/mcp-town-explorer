@@ -11,30 +11,7 @@ The point is decoupling: any MCP-speaking host can use any MCP server without cu
 
 ## Architecture
 
-```
-  user
-   |
-   v
-+-------------------------------------------------------+
-|  HOST  (v1_cli/host.py  or  v2_llm/host.py)           |
-|                                                       |
-|   V2 only:  [ LLM ]  proposes tool calls              |
-|             [ validation: allowlist + town check ]    |   <- permission boundary
-|                                                       |
-|   [ MCP CLIENT = ClientSession, from the SDK ]        |   <- not hand-written
-+-------------------------------------------------------+
-   |
-   |  JSON-RPC over stdio  (server run as a local subprocess)
-   v
-+-------------------------------------------------------+
-|  SERVER  (server/server.py, FastMCP)                  |
-|   tools: get_housing / get_schools / get_safety       |
-|   resource: town://{town}                             |
-+-------------------------------------------------------+
-   |
-   v
-  data/towns.csv   (read once at startup)
-```
+![Architecture: user to host (LLM + MCP client) over JSON-RPC/stdio to server to data](docs/architecture.svg)
 
 Which file is which:
 
@@ -57,6 +34,7 @@ Argv selects the tool; the model is never involved. This isolates the protocol f
 ```
 uv run python v1_cli/host.py list-tools            # print the raw advertised JSON schema
 uv run python v1_cli/host.py housing Winchester
+uv run python v1_cli/host.py distance Winchester
 uv run python v1_cli/host.py schools Lexington
 uv run python v1_cli/host.py safety Woburn
 uv run python v1_cli/host.py resource Winchester   # read the town://{town} resource
