@@ -1,6 +1,6 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="760" height="540" viewBox="0 0 760 540" font-family="ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, sans-serif">
+<svg xmlns="http://www.w3.org/2000/svg" width="780" height="574" viewBox="0 0 780 574" font-family="ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, sans-serif">
   <!-- own background card, so it reads on GitHub light or dark themes -->
-  <rect x="1" y="1" width="758" height="538" rx="16" fill="#ffffff" stroke="#e2e8f0" stroke-width="2"/>
+  <rect x="1" y="1" width="778" height="572" rx="16" fill="#ffffff" stroke="#e2e8f0" stroke-width="2"/>
 
   <defs>
     <marker id="arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
@@ -9,37 +9,37 @@
   </defs>
 
   <!-- user -->
-  <rect x="333" y="26" width="94" height="36" rx="18" fill="#f1f5f9" stroke="#cbd5e1" stroke-width="1.5"/>
-  <text x="380" y="49" text-anchor="middle" font-size="15" font-weight="600" fill="#0f172a">user</text>
-  <line x1="380" y1="62" x2="380" y2="96" stroke="#94a3b8" stroke-width="2" marker-end="url(#arrow)"/>
+  <rect x="335" y="24" width="110" height="42" rx="21" fill="#f1f5f9" stroke="#cbd5e1" stroke-width="1.5"/>
+  <text x="390" y="52" text-anchor="middle" font-size="17" font-weight="600" fill="#0f172a">user</text>
+  <line x1="390" y1="66" x2="390" y2="100" stroke="#94a3b8" stroke-width="2" marker-end="url(#arrow)"/>
 
   <!-- HOST -->
-  <rect x="80" y="98" width="600" height="156" rx="14" fill="#eff6ff" stroke="#2563eb" stroke-width="2"/>
-  <text x="104" y="126" font-size="15" font-weight="700" fill="#1d4ed8">HOST</text>
-  <text x="150" y="126" font-size="13" fill="#475569">v1_cli/host.py  or  v2_llm/host.py</text>
+  <rect x="70" y="102" width="640" height="170" rx="14" fill="#eff6ff" stroke="#2563eb" stroke-width="2"/>
+  <text x="96" y="137" font-size="18" font-weight="700" fill="#1d4ed8">HOST</text>
+  <text x="156" y="137" font-size="14" fill="#475569">v1_cli/host.py  or  v2_llm/host.py</text>
 
-  <rect x="104" y="140" width="552" height="42" rx="9" fill="#ffffff" stroke="#bfdbfe" stroke-width="1.5"/>
-  <text x="120" y="166" font-size="13" fill="#0f172a"><tspan font-weight="600">V2 only:</tspan> the LLM proposes tool calls</text>
+  <rect x="96" y="152" width="548" height="48" rx="10" fill="#ffffff" stroke="#bfdbfe" stroke-width="1.5"/>
+  <text x="114" y="182" font-size="15" fill="#0f172a"><tspan font-weight="600">V2 only:</tspan> the LLM proposes tool calls</text>
 
-  <rect x="104" y="192" width="552" height="42" rx="9" fill="#ffffff" stroke="#bfdbfe" stroke-width="1.5"/>
-  <text x="120" y="218" font-size="13" fill="#0f172a"><tspan font-weight="600">MCP CLIENT = ClientSession</tspan>  (from the SDK, not hand-written)</text>
+  <rect x="96" y="210" width="548" height="48" rx="10" fill="#ffffff" stroke="#bfdbfe" stroke-width="1.5"/>
+  <text x="114" y="240" font-size="15" fill="#0f172a"><tspan font-weight="600">MCP CLIENT = ClientSession</tspan>  (from the SDK, not hand-written)</text>
 
   <!-- arrow: transport -->
-  <line x1="380" y1="254" x2="380" y2="316" stroke="#94a3b8" stroke-width="2" marker-end="url(#arrow)"/>
-  <text x="396" y="280" font-size="12" font-weight="600" fill="#334155">JSON-RPC over stdio</text>
-  <text x="396" y="298" font-size="11.5" fill="#64748b">server runs as a local subprocess</text>
+  <line x1="390" y1="272" x2="390" y2="340" stroke="#94a3b8" stroke-width="2" marker-end="url(#arrow)"/>
+  <text x="414" y="303" font-size="14" font-weight="600" fill="#334155">JSON-RPC over stdio</text>
+  <text x="414" y="323" font-size="13" fill="#64748b">server runs as a local subprocess</text>
 
   <!-- SERVER -->
-  <rect x="150" y="318" width="460" height="112" rx="14" fill="#ecfdf5" stroke="#059669" stroke-width="2"/>
-  <text x="174" y="346" font-size="15" font-weight="700" fill="#047857">SERVER</text>
-  <text x="234" y="346" font-size="13" fill="#475569">server/server.py  (FastMCP)</text>
-  <text x="174" y="378" font-size="12.5" fill="#0f172a"><tspan font-weight="600">tools:</tspan>  get_housing · get_distance · get_schools · get_safety</text>
-  <text x="174" y="404" font-size="13" fill="#0f172a"><tspan font-weight="600">resource:</tspan>  town://{town}</text>
+  <rect x="120" y="342" width="540" height="126" rx="14" fill="#ecfdf5" stroke="#059669" stroke-width="2"/>
+  <text x="146" y="378" font-size="18" font-weight="700" fill="#047857">SERVER</text>
+  <text x="222" y="378" font-size="14" fill="#475569">server/server.py  (FastMCP)</text>
+  <text x="146" y="415" font-size="14.5" fill="#0f172a"><tspan font-weight="600">tools:</tspan>  get_housing · get_distance · get_schools · get_safety</text>
+  <text x="146" y="445" font-size="15" fill="#0f172a"><tspan font-weight="600">resource:</tspan>  town://{town}</text>
 
   <!-- arrow: data -->
-  <line x1="380" y1="430" x2="380" y2="472" stroke="#94a3b8" stroke-width="2" marker-end="url(#arrow)"/>
+  <line x1="390" y1="468" x2="390" y2="508" stroke="#94a3b8" stroke-width="2" marker-end="url(#arrow)"/>
 
   <!-- data -->
-  <rect x="252" y="474" width="256" height="46" rx="10" fill="#f8fafc" stroke="#cbd5e1" stroke-width="1.5"/>
-  <text x="380" y="502" text-anchor="middle" font-size="13" fill="#0f172a"><tspan font-weight="600">data/towns.csv</tspan>  ·  read once at startup</text>
+  <rect x="230" y="510" width="320" height="46" rx="10" fill="#f8fafc" stroke="#cbd5e1" stroke-width="1.5"/>
+  <text x="390" y="539" text-anchor="middle" font-size="15" fill="#0f172a"><tspan font-weight="600">data/towns.csv</tspan>  ·  read once at startup</text>
 </svg>
