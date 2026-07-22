@@ -11,30 +11,7 @@ The point is decoupling: any MCP-speaking host can use any MCP server without cu
 
 ## Architecture
 
-```
-  user
-   |
-   v
-+-------------------------------------------------------+
-|  HOST  (v1_cli/host.py  or  v2_llm/host.py)           |
-|                                                       |
-|   V2 only:  [ LLM ]  proposes tool calls              |
-|             [ validation: allowlist + town check ]    |   <- permission boundary
-|                                                       |
-|   [ MCP CLIENT = ClientSession, from the SDK ]        |   <- not hand-written
-+-------------------------------------------------------+
-   |
-   |  JSON-RPC over stdio  (server run as a local subprocess)
-   v
-+-------------------------------------------------------+
-|  SERVER  (server/server.py, FastMCP)                  |
-|   tools: get_housing / get_schools / get_safety       |
-|   resource: town://{town}                             |
-+-------------------------------------------------------+
-   |
-   v
-  data/towns.csv   (read once at startup)
-```
+![Architecture: user to host (LLM proposal + validation + MCP client) over JSON-RPC/stdio to server to data](docs/architecture.svg)
 
 Which file is which:
 
