@@ -11,7 +11,7 @@ The point is decoupling: any MCP-speaking host can use any MCP server without cu
 
 ## Architecture
 
-![Architecture: user to host (LLM proposal + validation + MCP client) over JSON-RPC/stdio to server to data](docs/architecture.svg)
+![Architecture: user to host (LLM + MCP client) over JSON-RPC/stdio to server to data](docs/architecture.svg)
 
 Which file is which:
 
