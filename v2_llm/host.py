@@ -18,6 +18,7 @@ import sys
 from pathlib import Path
 
 import tiktoken
+from dotenv import load_dotenv
 from mcp import ClientSession, StdioServerParameters
 from mcp.client.stdio import stdio_client
 from openai import OpenAI
@@ -182,6 +183,9 @@ async def run(prompt: str, show_tokens: bool) -> int:
 
 
 def main() -> None:
+    # Load OPENAI_API_KEY from a .env at the repo root, if present, so a plain
+    # `uv run python v2_llm/host.py ...` works without exporting the key first.
+    load_dotenv(Path(__file__).resolve().parent.parent / ".env")
     parser = argparse.ArgumentParser(description="V2 MCP host (LLM + validation).")
     parser.add_argument("prompt", help="natural-language question")
     parser.add_argument("--show-tokens", action="store_true", help="print tool-schema token cost")

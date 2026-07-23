@@ -55,17 +55,17 @@ Natural language in.
 The model sees the tool schemas, proposes a call, the **host validates it**, the client executes it, the result is fed back, and the model explains.
 The loop repeats (capped at 5 iterations) until the model stops requesting tools.
 
-Provide `OPENAI_API_KEY` either by exporting it, or by putting it in a `.env`
-file and letting uv load it with `--env-file` (the `.env` is git-ignored):
+Put `OPENAI_API_KEY` in a `.env` file at the repo root (it is git-ignored); the
+host loads it automatically via `python-dotenv`. Exporting the variable works too.
 
 ```
-# option A: export
-export OPENAI_API_KEY=sk-...
+# .env at the repo root contains: OPENAI_API_KEY=sk-...   (loaded automatically)
 uv run python v2_llm/host.py "Compare schools in Winchester and Lexington"
+uv run python v2_llm/host.py --show-tokens "How safe is Woburn?"   # print tool-schema token cost
 
-# option B: keep it in .env
-uv run --env-file .env python v2_llm/host.py "Compare schools in Winchester and Lexington"
-uv run --env-file .env python v2_llm/host.py --show-tokens "How safe is Woburn?"   # print tool-schema token cost
+# or export it instead of using .env:
+export OPENAI_API_KEY=sk-...
+uv run python v2_llm/host.py "How safe is Woburn?"
 ```
 
 The validation step is the reason V2 exists.
