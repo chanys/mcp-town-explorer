@@ -27,9 +27,10 @@ DATA_PATH = Path(__file__).resolve().parent.parent / "data" / "towns.csv"
 MODEL = "gpt-5.4-mini"
 MAX_ITERATIONS = 5
 
-# ALLOWLIST: the only tool names the host will ever execute. Checked before any
-# call. The server advertises exactly these, but the allowlist is the host's own
-# guarantee -- it does not trust the model to stay within bounds.
+# ALLOWLIST: the exact tool names this host is willing to run. Every call the model
+# proposes is checked against this list first. The server happens to offer exactly
+# these, but the host keeps its own list so it never runs a tool just because the
+# model asked for it.
 ALLOWLIST = {"get_housing", "get_distance", "get_schools", "get_safety"}
 
 SYSTEM_PROMPT = (
@@ -40,7 +41,8 @@ SYSTEM_PROMPT = (
 
 
 def valid_towns() -> set[str]:
-    """The host's own copy of the valid-town set, used to vet arguments."""
+    """Load the town names from the CSV. The host keeps its own copy so it can check
+    the model's arguments before calling the server."""
     with DATA_PATH.open(newline="") as f:
         return {row["town"].lower() for row in csv.DictReader(f)}
 
@@ -63,7 +65,8 @@ def to_openai_tools(mcp_tools) -> list[dict]:
 
 
 def count_schema_tokens(tools: list[dict]) -> int:
-    """Token cost of the tool-schema block the model must read every turn."""
+    """Count the tokens in the tool schemas. The model re-reads this block every
+    turn, so it is a recurring cost -- the thing we want to measure."""
     try:
         enc = tiktoken.encoding_for_model(MODEL)
     except KeyError:
@@ -72,13 +75,14 @@ def count_schema_tokens(tools: list[dict]) -> int:
 
 
 def validate(name: str, args: dict, towns: set[str], town_tools: set[str]) -> str | None:
-    """Return a rejection reason, or None if the proposed call is allowed.
+    """Check one tool call the model proposed. Return a reason to reject it, or None
+    to allow it.
 
-    The allowlist gates every tool. The dataset check applies only to tools that
-    actually take a `town` (derived from their advertised schema), because that is
-    the one argument this host has authoritative data for. A differently-shaped
-    tool (say a weather tool taking lat/lon) is gated by the allowlist alone, and
-    the server validates its own inputs.
+    Two checks: (1) the tool name must be on the allowlist; (2) if the tool takes a
+    `town`, that town must be one we have data for. We only validate the town because
+    it is the one argument this host knows the valid values for. A tool with
+    different arguments (say a weather tool taking lat/lon) only has to pass the
+    allowlist -- the server checks its own inputs.
     """
     if name not in ALLOWLIST:
         return f"tool {name!r} is not on the allowlist"
@@ -93,15 +97,22 @@ async def run(prompt: str, show_tokens: bool) -> int:
     towns = valid_towns()
     llm = OpenAI()
 
+    # StdioServerParameters: how to start the server -- the command (this same Python
+    # interpreter) and its arguments (the server script).
     params = StdioServerParameters(command=sys.executable, args=[str(SERVER)])
+    # stdio_client: starts the server as a child process and returns two pipes --
+    # `read` for messages from the server, `write` for messages to it. This is the
+    # transport (how bytes move); it is not MCP-aware.
     async with stdio_client(params) as (read, write):
+        # ClientSession: the MCP client. It wraps the pipes and speaks the protocol
+        # (initialize, list_tools, call_tool), so we never write raw JSON-RPC.
         async with ClientSession(read, write) as session:
             await session.initialize()
             mcp_tools = (await session.list_tools()).tools
             tools = to_openai_tools(mcp_tools)
-            # Tools whose schema declares a `town` argument. Only these get the
-            # dataset check in validate(); derived from the advertised schema, so a
-            # server with differently-shaped tools needs no change here.
+            # The names of tools that take a `town` argument, read from the schema
+            # the server advertised. Only these get the town check in validate(), so
+            # a tool with different arguments needs no change here.
             town_tools = {
                 t.name for t in mcp_tools
                 if "town" in (t.inputSchema.get("properties") or {})
@@ -111,9 +122,10 @@ async def run(prompt: str, show_tokens: bool) -> int:
                 print(f"[tokens] tool schema block = {count_schema_tokens(tools)} tokens "
                       f"({len(tools)} tools)", file=sys.stderr)
 
-            # First turn carries the system + user input. Later turns chain off
-            # the server-side conversation state via previous_response_id, so we
-            # only ever send back the new tool outputs -- no manual history.
+            # The first request sends the system prompt and the user's question.
+            # After that we pass previous_response_id, so OpenAI keeps the running
+            # conversation on its side and each later request only sends the new tool
+            # results -- we never resend the whole history.
             response = llm.responses.create(
                 model=MODEL,
                 input=[
@@ -145,9 +157,10 @@ async def run(prompt: str, show_tokens: bool) -> int:
                         continue
 
                     # ---- PERMISSION BOUNDARY ----
-                    # Validation passed. The model's PROPOSAL becomes an EXECUTION
-                    # on the next line. Nothing below the model reaches the server
-                    # without having cleared validate() above.
+                    # The checks above passed. On the very next line the model's
+                    # *request* to call a tool becomes a real *execution* against the
+                    # server. This is the one line where an untrusted proposal turns
+                    # into an action; anything that failed validate() never reaches it.
                     print(f"[EXECUTE] {name}({args})", file=sys.stderr)
                     result = await session.call_tool(name, args)
                     text = "".join(b.text for b in result.content)

@@ -33,7 +33,7 @@ COMMAND_TO_TOOL = {
 
 
 def log(verbose: bool, *parts) -> None:
-    """Protocol-lifecycle logging goes to stderr, so stdout stays clean data."""
+    """When --verbose is set, print each MCP step to stderr so stdout stays clean data."""
     if verbose:
         print("[protocol]", *parts, file=sys.stderr)
 
@@ -44,14 +44,21 @@ def _print_blocks(blocks, file=sys.stdout) -> None:
 
 
 async def run(args: argparse.Namespace) -> int:
-    # Launch the server as a subprocess over stdio, using this same interpreter.
+    # StdioServerParameters: describes how to start the server -- the command to run
+    # (this same Python interpreter) and its arguments (the server script).
     params = StdioServerParameters(command=sys.executable, args=[str(SERVER)])
+    # stdio_client: actually starts the server as a child process and gives back two
+    # pipes -- `read` for messages coming from the server, `write` for messages going
+    # to it. This is the transport (how bytes move); it is not MCP-aware.
     async with stdio_client(params) as (read, write):
+        # ClientSession: the MCP client. It wraps those two pipes and speaks the
+        # protocol for us (initialize, list_tools, call_tool), so we never write raw
+        # JSON-RPC by hand.
         async with ClientSession(read, write) as session:
             log(args.verbose, "-> initialize")
             init = await session.initialize()
-            # The server's initialize response: protocol version it agreed to and
-            # who it says it is. This is the MCP handshake.
+            # initialize() is the MCP handshake. The reply tells us the protocol
+            # version the server agreed to and the server's own name and version.
             log(args.verbose, "<- initialized:",
                 f"protocol={init.protocolVersion},",
                 f"server={init.serverInfo.name} {init.serverInfo.version}")
@@ -60,8 +67,9 @@ async def run(args: argparse.Namespace) -> int:
                 log(args.verbose, "-> tools/list")
                 result = await session.list_tools()
                 log(args.verbose, f"<- tools/list ({len(result.tools)} tools)")
-                # Print the raw advertised schema: this is what every client sees,
-                # and in V2 it is what the model is billed tokens to read.
+                # Print the exact tool schema the server advertises. This is what any
+                # client sees, and in V2 it is the text the model reads (and is
+                # charged tokens for).
                 for t in result.tools:
                     print(json.dumps(
                         {"name": t.name, "description": t.description, "inputSchema": t.inputSchema},
@@ -84,7 +92,7 @@ async def run(args: argparse.Namespace) -> int:
             log(args.verbose, f"<- tools/call (isError={result.isError})")
             if result.isError:
                 print("ERROR from server:", file=sys.stderr)
-                _print_blocks(result.content, file=sys.stderr)  # error text lives here
+                _print_blocks(result.content, file=sys.stderr)  # the error message is inside result.content
                 return 1
             _print_blocks(result.content)
             return 0
