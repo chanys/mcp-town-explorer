@@ -19,6 +19,8 @@ Which file is which:
 - **Client**: `ClientSession` from the MCP SDK, constructed inside each host. It is **not** hand-written JSON-RPC; the SDK provides it.
 - **Server**: `server/server.py`. Built with FastMCP; exposes the tools and resource. Neither host imports it -- they only launch it as a subprocess and speak the protocol.
 
+For a deeper walk-through of the MCP plumbing (transport, client, handshake, schemas, result shapes), see [`docs/notes.md`](docs/notes.md).
+
 ## Setup
 
 Uses [uv](https://docs.astral.sh/uv/). Python is pinned to 3.12.
