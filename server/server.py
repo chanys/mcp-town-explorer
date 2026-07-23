@@ -1,7 +1,8 @@
 """MCP server for the town explorer.
 
-FastMCP + stdio transport. Exposes three narrow tools and one resource over
-JSON-RPC. The two hosts (v1_cli, v2_llm) talk to this exact server unchanged.
+Built with FastMCP, talking over stdio (standard input/output). It offers four
+narrow tools (get_housing, get_distance, get_schools, get_safety) and one resource
+(town://{town}). Both hosts, v1_cli and v2_llm, use this same server unchanged.
 """
 
 import csv
@@ -11,9 +12,10 @@ from mcp.server.fastmcp import FastMCP
 
 DATA_PATH = Path(__file__).resolve().parent.parent / "data" / "towns.csv"
 
-# Column -> converter. This doubles as a schema check on read: a missing column
-# or an uncoercible cell raises loudly here at startup, so bad data cannot flow
-# silently into a tool result. This is the one place we validate the data boundary.
+# Each column name maps to the function that converts its text value into the right
+# Python type. Loading the CSV through this map also checks it: if a column is
+# missing, or a value won't convert (say a price that isn't a number), it fails
+# immediately at startup instead of quietly handing bad data to a caller later.
 _FIELDS = {
     "town": str,
     "median_home_price": int,
@@ -42,7 +44,10 @@ mcp = FastMCP("town-explorer")
 
 
 def _lookup(town: str) -> dict:
-    """Find a town or raise, so the error surfaces across the protocol."""
+    """Return the row for a town, or raise if the name is unknown.
+
+    We let the error propagate rather than catching it, so the client sees it.
+    """
     row = TOWNS.get(town.lower())
     if row is None:
         known = ", ".join(sorted(r["town"] for r in TOWNS.values()))
@@ -93,6 +98,6 @@ def town_profile(town: str) -> str:
 
 
 if __name__ == "__main__":
-    # stdio transport: the host launches this file as a subprocess and speaks
-    # JSON-RPC over stdin/stdout. No network, no port.
+    # stdio transport: when a host runs this file, it starts it as a child process
+    # and the two talk over stdin/stdout using JSON-RPC. No network, no port.
     mcp.run()
