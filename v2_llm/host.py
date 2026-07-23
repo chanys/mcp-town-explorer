@@ -126,13 +126,13 @@ async def run(prompt: str, show_tokens: bool) -> int:
             for _ in range(MAX_ITERATIONS):
                 calls = [item for item in response.output if item.type == "function_call"]
                 if not calls:
-                    print(response.output_text or "")
+                    print(response.output_text)
                     return 0
 
                 tool_outputs = []
                 for call in calls:
                     name = call.name
-                    args = json.loads(call.arguments or "{}")
+                    args = json.loads(call.arguments)
 
                     reason = validate(name, args, towns, town_tools)
                     if reason is not None:
@@ -150,7 +150,7 @@ async def run(prompt: str, show_tokens: bool) -> int:
                     # without having cleared validate() above.
                     print(f"[EXECUTE] {name}({args})", file=sys.stderr)
                     result = await session.call_tool(name, args)
-                    text = "".join(getattr(b, "text", "") for b in result.content)
+                    text = "".join(b.text for b in result.content)
                     tool_outputs.append({
                         "type": "function_call_output",
                         "call_id": call.call_id,
