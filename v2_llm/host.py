@@ -46,15 +46,17 @@ def valid_towns() -> set[str]:
 
 
 def to_openai_tools(mcp_tools) -> list[dict]:
-    """Translate MCP tool schemas into OpenAI's function-tool format."""
+    """Translate MCP tool schemas into OpenAI Responses-API function tools.
+
+    The Responses API flattens the function tool (name/description/parameters at
+    the top level), unlike Chat Completions which nests them under "function".
+    """
     return [
         {
             "type": "function",
-            "function": {
-                "name": t.name,
-                "description": t.description,
-                "parameters": t.inputSchema,
-            },
+            "name": t.name,
+            "description": t.description,
+            "parameters": t.inputSchema,
         }
         for t in mcp_tools
     ]
@@ -95,36 +97,36 @@ async def run(prompt: str, show_tokens: bool) -> int:
                 print(f"[tokens] tool schema block = {count_schema_tokens(tools)} tokens "
                       f"({len(tools)} tools)", file=sys.stderr)
 
-            messages = [
-                {"role": "system", "content": SYSTEM_PROMPT},
-                {"role": "user", "content": prompt},
-            ]
+            # First turn carries the system + user input. Later turns chain off
+            # the server-side conversation state via previous_response_id, so we
+            # only ever send back the new tool outputs -- no manual history.
+            response = llm.responses.create(
+                model=MODEL,
+                input=[
+                    {"role": "system", "content": SYSTEM_PROMPT},
+                    {"role": "user", "content": prompt},
+                ],
+                tools=tools,
+            )
 
             for _ in range(MAX_ITERATIONS):
-                response = llm.chat.completions.create(model=MODEL, messages=messages, tools=tools)
-                msg = response.choices[0].message
-
-                if not msg.tool_calls:
-                    print(msg.content or "")
+                calls = [item for item in response.output if item.type == "function_call"]
+                if not calls:
+                    print(response.output_text or "")
                     return 0
 
-                messages.append({
-                    "role": "assistant",
-                    "content": msg.content,
-                    "tool_calls": [tc.model_dump() for tc in msg.tool_calls],
-                })
-
-                for tc in msg.tool_calls:
-                    name = tc.function.name
-                    args = json.loads(tc.function.arguments or "{}")
+                tool_outputs = []
+                for call in calls:
+                    name = call.name
+                    args = json.loads(call.arguments or "{}")
 
                     reason = validate(name, args, towns)
                     if reason is not None:
                         print(f"[REJECTED] {name}({args}) -- {reason}", file=sys.stderr)
-                        messages.append({
-                            "role": "tool",
-                            "tool_call_id": tc.id,
-                            "content": f"REJECTED by host: {reason}",
+                        tool_outputs.append({
+                            "type": "function_call_output",
+                            "call_id": call.call_id,
+                            "output": f"REJECTED by host: {reason}",
                         })
                         continue
 
@@ -135,7 +137,18 @@ async def run(prompt: str, show_tokens: bool) -> int:
                     print(f"[EXECUTE] {name}({args})", file=sys.stderr)
                     result = await session.call_tool(name, args)
                     text = "".join(getattr(b, "text", "") for b in result.content)
-                    messages.append({"role": "tool", "tool_call_id": tc.id, "content": text})
+                    tool_outputs.append({
+                        "type": "function_call_output",
+                        "call_id": call.call_id,
+                        "output": text,
+                    })
+
+                response = llm.responses.create(
+                    model=MODEL,
+                    previous_response_id=response.id,
+                    input=tool_outputs,
+                    tools=tools,
+                )
 
             print(f"[stopped] hit MAX_ITERATIONS={MAX_ITERATIONS} without a final answer", file=sys.stderr)
             return 1
