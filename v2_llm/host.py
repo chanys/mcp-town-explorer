@@ -71,15 +71,21 @@ def count_schema_tokens(tools: list[dict]) -> int:
     return len(enc.encode(json.dumps(tools)))
 
 
-def validate(name: str, args: dict, towns: set[str]) -> str | None:
-    """Return a rejection reason, or None if the proposed call is allowed."""
+def validate(name: str, args: dict, towns: set[str], town_tools: set[str]) -> str | None:
+    """Return a rejection reason, or None if the proposed call is allowed.
+
+    The allowlist gates every tool. The dataset check applies only to tools that
+    actually take a `town` (derived from their advertised schema), because that is
+    the one argument this host has authoritative data for. A differently-shaped
+    tool (say a weather tool taking lat/lon) is gated by the allowlist alone, and
+    the server validates its own inputs.
+    """
     if name not in ALLOWLIST:
         return f"tool {name!r} is not on the allowlist"
-    town = args.get("town")
-    if not isinstance(town, str):
-        return f"missing or non-string 'town' argument: {town!r}"
-    if town.lower() not in towns:
-        return f"unknown town {town!r} (not in dataset)"
+    if name in town_tools:
+        town = args.get("town")
+        if not isinstance(town, str) or town.lower() not in towns:
+            return f"unknown or missing town {town!r} (not in dataset)"
     return None
 
 
@@ -91,7 +97,15 @@ async def run(prompt: str, show_tokens: bool) -> int:
     async with stdio_client(params) as (read, write):
         async with ClientSession(read, write) as session:
             await session.initialize()
-            tools = to_openai_tools((await session.list_tools()).tools)
+            mcp_tools = (await session.list_tools()).tools
+            tools = to_openai_tools(mcp_tools)
+            # Tools whose schema declares a `town` argument. Only these get the
+            # dataset check in validate(); derived from the advertised schema, so a
+            # server with differently-shaped tools needs no change here.
+            town_tools = {
+                t.name for t in mcp_tools
+                if "town" in (t.inputSchema.get("properties") or {})
+            }
 
             if show_tokens:
                 print(f"[tokens] tool schema block = {count_schema_tokens(tools)} tokens "
@@ -120,7 +134,7 @@ async def run(prompt: str, show_tokens: bool) -> int:
                     name = call.name
                     args = json.loads(call.arguments or "{}")
 
-                    reason = validate(name, args, towns)
+                    reason = validate(name, args, towns, town_tools)
                     if reason is not None:
                         print(f"[REJECTED] {name}({args}) -- {reason}", file=sys.stderr)
                         tool_outputs.append({

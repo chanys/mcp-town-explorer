@@ -69,7 +69,7 @@ uv run --env-file .env python v2_llm/host.py --show-tokens "How safe is Woburn?"
 ```
 
 The validation step is the reason V2 exists.
-Before any execution the host checks the proposed tool name against an **allowlist** and checks that the `town` argument **exists in the dataset**; a rejected call is logged (`[REJECTED] ...`) and never reaches the server.
+Before any execution the host checks the proposed tool name against an **allowlist** and, for tools that take a `town`, checks that the town **exists in the dataset**; a rejected call is logged (`[REJECTED] ...`) and never reaches the server.
 The exact line where a model *proposal* becomes an *execution* is commented in `v2_llm/host.py`.
 
 ## Provenance
